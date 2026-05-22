@@ -1,0 +1,102 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#include "Arduino.h"
+#include "SoftwareSerial.h"
+#include "DFRobotDFPlayerMini.h"
+
+Adafruit_SSD1306 display(128, 32, &Wire, 4);
+
+SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
+DFRobotDFPlayerMini myDFPlayer;
+
+#define v A0 //vol up
+#define s A1 //vol down
+#define pp 9 //state button (if it's pressed or not)
+
+int vol= 20, pv=0;//state button's consequence 
+
+void setup()
+{
+   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+   while(true);
+  }
+  display.display();
+  display.clearDisplay();
+
+  mySoftwareSerial.begin(9600);
+  Serial.begin(9600);
+  
+  pinMode(pp,INPUT_PULLUP);
+
+   if (myDFPlayer.begin(mySoftwareSerial)) 
+  {
+    Serial.println("\r\n\r\nOK");   //  ← ←  CONFIRMATION Note
+    // Set volume to maximum (0 to 30).
+    myDFPlayer.volume(30);
+  } 
+  else 
+  {
+    Serial.println("Connecting to DFPlayer Mini failed!");
+  }
+    
+}
+
+
+void loop()
+{
+  
+int x = analogRead(v);
+int y = analogRead(s);
+
+int button = !digitalRead(pp);
+ 
+  if(digitalRead(pp)==0){
+    if(pv == 0){
+    myDFPlayer.start();
+    display.drawRect(90, 5, 5, 25, WHITE);
+    display.drawRect(100, 5, 5, 25, WHITE);//--> start logo
+    display.display();
+    pv=1;
+    }
+    else if(pv == 1){
+    myDFPlayer.pause();
+    display.drawLine(100, 5, 120, 15, WHITE);
+    display.drawLine(100, 5, 100, 25, WHITE);//-->pause logo 
+    display.drawLine(100, 25, 120, 15, WHITE);
+    display.display();
+    pv=0;
+    }
+  }
+  if(analogRead(s)==0){
+    myDFPlayer.next();
+  }
+  if(analogRead(s)==1023){
+    myDFPlayer.previous();
+    
+  }
+  if(analogRead(v)==1023 && vol<30){
+    vol=vol+1;
+    myDFPlayer.volume(vol);
+  }
+  if(analogRead(v)==0 && vol>0){
+    vol=vol-1;
+    myDFPlayer.volume(vol);
+  }
+
+ display.clearDisplay();
+ display.setTextSize(1);
+ display.setTextColor(WHITE);
+
+ display.setCursor(0, 0);
+ display.print("Volume");
+ display.setCursor(50, 0);
+ display.print(vol);
+ display.setCursor(128, 0);
+ display.print("Track");
+ display.setCursor(45, 10);
+ display.print(myDFPlayer.readCurrentFileNumber());
+ display.display();
+
+}
