@@ -32,10 +32,10 @@ int main(void)
         BeginDrawing(); // Diciamo alla scheda video: "Iniziamo a pitturare!"
 
             // 1. Pulisce lo schermo dal frame precedente (Fondamentale!)
-            // Usiamo il nero, il colore classico dei dungeon
+            // Usiamo il nero
             ClearBackground(BLACK);
             
-            DrawRectangle(eroe.x, eroe.y, 40, 40, YELLOW);
+            DrawRectangle(eroe.x, eroe.y, eroe.width, eroe.height, YELLOW);
 
             // 2. Disegna un testo al centro dello schermo (X, Y, Dimensione, Colore)
             //DrawText("Benvenuto nel Dungeon!", 220, 280, 30, GREEN);
