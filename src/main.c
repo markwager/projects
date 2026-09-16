@@ -1,4 +1,6 @@
 #include "raylib.h"
+#include "../include/input.h"
+#include "../include/entita.h"
 
 int main(void)
 {
@@ -11,8 +13,9 @@ int main(void)
     // Crea fisicamente la finestra 
     InitWindow(larghezza_schermo, altezza_schermo, "Il mio primo Roguelike in C!");
 
-    // Diciamo al gioco di girare a un massimo di 60 Frame al Secondo (FPS)
-    SetTargetFPS(60); 
+    SetTargetFPS(60);
+
+    Entita eroe=crea_player(400,300);
 
     // ========================================================================
     // 2. IL GAME LOOP INFINITO
@@ -21,7 +24,8 @@ int main(void)
     while(!WindowShouldClose()){    
     
         // --- A. FASE DI INPUT & UPDATE (Fisica e Logica) ---
-        // (Qui in futuro richiamerai: leggi_input(); muovi_eroe(); ecc.)
+        StatoInput input_corrente=leggi_input_player();
+        muovi_player(&eroe, input_corrente);
 
 
         // --- B. FASE DI DISEGNO (Draw) ---
@@ -29,12 +33,14 @@ int main(void)
 
             // 1. Pulisce lo schermo dal frame precedente (Fondamentale!)
             // Usiamo il nero, il colore classico dei dungeon
-            ClearBackground(BLACK); 
+            ClearBackground(BLACK);
+            
+            DrawRectangle(eroe.x, eroe.y, 40, 40, YELLOW);
 
             // 2. Disegna un testo al centro dello schermo (X, Y, Dimensione, Colore)
-            DrawText("Benvenuto nel Dungeon!", 220, 280, 30, GREEN);
+            //DrawText("Benvenuto nel Dungeon!", 220, 280, 30, GREEN);
             
-            DrawText("Premi ESC per uscire.", 280, 330, 20, DARKGRAY);
+            //DrawText("Premi ESC per uscire.", 280, 330, 20, DARKGRAY);
 
         EndDrawing(); // Diciamo alla scheda video: "Ho finito, manda tutto a schermo!"
     }
@@ -45,5 +51,4 @@ int main(void)
     // Distrugge la finestra e libera la memoria RAM usata da Raylib
     CloseWindow(); 
 
-    return 0;
 }
