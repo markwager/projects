@@ -8,6 +8,8 @@ typedef struct{
     int y;
     int vel;
     int hp;
+    int width;
+    int height;
 } Entita;
 
 Entita crea_player(int start_x, int start_y); //restituisce struct player

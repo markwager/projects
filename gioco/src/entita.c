@@ -1,4 +1,5 @@
 #include "../include/entita.h"
+#include <raylib.h>
 
 Entita crea_player(int start_x, int start_y){
     Entita giocatore;
@@ -6,20 +7,41 @@ Entita crea_player(int start_x, int start_y){
     giocatore.y=start_y;
     giocatore.vel=5;
     giocatore.hp=100;
+    giocatore.width=40;
+    giocatore.height=40;
     return giocatore;
 }
 
 void muovi_player(Entita *player, StatoInput input){
-    if(input.up)
+    if(input.up){
         player->y-=player->vel;
-    
-    if(input.down)
+    }
+
+    if(input.down){
         player->y+=player->vel;
+    }
 
-    if(input.sx)
+    if(input.sx){
         player->x-=player->vel;
+    }
 
-    if(input.dx)
+    if(input.dx){
         player->x+=player->vel;
-    
+    }
+
+    if((player->y)<0){
+            player->y=0;
+    }
+
+    if((player->x)<0){
+            player->x=0;
+    }
+
+    if(player->x > GetScreenWidth()-(player->width)){
+        player->x = GetScreenWidth()-(player->width);
+    }
+
+    if(player->y > GetScreenHeight()-(player->height)){
+        player->y = GetScreenHeight()-(player->height);
+    }
 }
