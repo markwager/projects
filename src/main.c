@@ -20,8 +20,8 @@ int main(void)
     Texture2D eroe_sprite=LoadTexture("assets/Hero.png");
 
     //adattamento del personaggio alle dim del suo sprite
-    eroe.height=eroe_sprite.height/3;
-    eroe.width=eroe_sprite.width/8;
+    eroe.height=eroe_sprite.height/4;
+    eroe.width=eroe_sprite.width/9;
 
     Rectangle frame_rec={0.0f, 0.0f, (float)eroe.width, (float)eroe.height};
 
@@ -41,17 +41,47 @@ int main(void)
         StatoInput input_corrente=leggi_input_player();
         muovi_player(&eroe, input_corrente);
 
-        count_frame+=1;
+        if(input_corrente.up || input_corrente.down || input_corrente.sx || input_corrente.dx){
+            count_frame+=1;
+        }
+
+        else{
+            frame_corrente=0;
+            count_frame=0;
+        }
+
         if(count_frame>(60/vel_anim)){
             count_frame=0;
             frame_corrente+=1;
         }
 
-        if(frame_corrente>7){
+        if(frame_corrente>8){
             frame_corrente=0;
         }
 
         frame_rec.x =(float)frame_corrente*(float)eroe.width;
+
+        if(input_corrente.up){
+            frame_rec.y =0.0f*(float)eroe.height;
+
+        }
+
+        if(input_corrente.down){
+            frame_rec.y =2.0f*(float)eroe.height;
+
+        }
+
+        if(input_corrente.sx){
+            frame_rec.y =1.0f*(float)eroe.height;
+
+        }
+
+        if(input_corrente.dx){
+            frame_rec.y =3.0f*(float)eroe.height;
+
+        }
+
+
 
         // --- B. FASE DI DISEGNO (Draw) ---
         BeginDrawing(); // Diciamo alla scheda video: "Iniziamo a pitturare!"
