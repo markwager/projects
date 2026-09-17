@@ -10,17 +10,23 @@ int main(void)
     const int larghezza_schermo = 800;
     const int altezza_schermo = 600;
 
-    // Crea fisicamente la finestra 
+    //Crea fisicamente la finestra 
     InitWindow(larghezza_schermo, altezza_schermo, "Il mio primo Roguelike in C!");
 
     SetTargetFPS(60);
 
     Entita eroe=crea_player(400,300);
 
+    Texture2D eroe_sprite=LoadTexture("assets/gargoyle.png");
+
+    //adattamento del personaggio alle dim del suo sprite
+    eroe.height=eroe_sprite.height;
+    eroe.width=eroe_sprite.width;
+
     // ========================================================================
     // 2. IL GAME LOOP INFINITO
     // ========================================================================
-    // WindowShouldClose() diventa 'true' solo se premi ESC o la X della finestra
+    //WindowShouldClose() diventa 'true' solo se premi ESC o la X della finestra
     while(!WindowShouldClose()){    
     
         // --- A. FASE DI INPUT & UPDATE (Fisica e Logica) ---
@@ -35,20 +41,21 @@ int main(void)
             // Usiamo il nero
             ClearBackground(BLACK);
             
-            DrawRectangle(eroe.x, eroe.y, eroe.width, eroe.height, YELLOW);
-
+            DrawTexture(eroe_sprite, eroe.x, eroe.y, WHITE);
             // 2. Disegna un testo al centro dello schermo (X, Y, Dimensione, Colore)
-            //DrawText("Benvenuto nel Dungeon!", 220, 280, 30, GREEN);
+            DrawText("Benvenuto nel Dungeon!", 220, 280, 30, GREEN);
             
-            //DrawText("Premi ESC per uscire.", 280, 330, 20, DARKGRAY);
+            DrawText("Premi ESC per uscire.", 280, 330, 20, DARKGRAY);
 
         EndDrawing(); // Diciamo alla scheda video: "Ho finito, manda tutto a schermo!"
     }
 
+    UnloadTexture(eroe_sprite);
+
     // ========================================================================
     // 3. CHIUSURA E PULIZIA (De-inizializzazione)
     // ========================================================================
-    // Distrugge la finestra e libera la memoria RAM usata da Raylib
+    //Chiudi la finestra
     CloseWindow(); 
 
 }
