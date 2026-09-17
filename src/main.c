@@ -25,6 +25,12 @@ int main(void)
 
     Rectangle frame_rec={0.0f, 0.0f, (float)eroe.width, (float)eroe.height};
 
+    int frame_corrente=0; //tiene traccia di quale tra gli 8 disegnini stamo vedendo
+    int count_frame=0; //cronometro per rallentare animazione
+    int vel_anim=8; //quanti frame al secondio voglio vedere
+
+
+
     // ========================================================================
     // 2. IL GAME LOOP INFINITO
     // ========================================================================
@@ -35,6 +41,17 @@ int main(void)
         StatoInput input_corrente=leggi_input_player();
         muovi_player(&eroe, input_corrente);
 
+        count_frame+=1;
+        if(count_frame>(60/vel_anim)){
+            count_frame=0;
+            frame_corrente+=1;
+        }
+
+        if(frame_corrente>7){
+            frame_corrente=0;
+        }
+
+        frame_rec.x =(float)frame_corrente*(float)eroe.width;
 
         // --- B. FASE DI DISEGNO (Draw) ---
         BeginDrawing(); // Diciamo alla scheda video: "Iniziamo a pitturare!"
