@@ -17,11 +17,13 @@ int main(void)
 
     Entita eroe=crea_player(400,300);
 
-    Texture2D eroe_sprite=LoadTexture("assets/gargoyle.png");
+    Texture2D eroe_sprite=LoadTexture("assets/Hero.png");
 
     //adattamento del personaggio alle dim del suo sprite
-    eroe.height=eroe_sprite.height;
-    eroe.width=eroe_sprite.width;
+    eroe.height=eroe_sprite.height/3;
+    eroe.width=eroe_sprite.width/8;
+
+    Rectangle frame_rec={0.0f, 0.0f, (float)eroe.width, (float)eroe.height};
 
     // ========================================================================
     // 2. IL GAME LOOP INFINITO
@@ -41,8 +43,7 @@ int main(void)
             // Usiamo il nero
             ClearBackground(BLACK);
             
-            DrawTexture(eroe_sprite, eroe.x, eroe.y, WHITE);
-            // 2. Disegna un testo al centro dello schermo (X, Y, Dimensione, Colore)
+            DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, WHITE);            // 2. Disegna un testo al centro dello schermo (X, Y, Dimensione, Colore)
             DrawText("Benvenuto nel Dungeon!", 220, 280, 30, GREEN);
             
             DrawText("Premi ESC per uscire.", 280, 330, 20, DARKGRAY);
