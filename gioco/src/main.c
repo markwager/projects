@@ -12,18 +12,15 @@ int main(void)
 
     //Crea fisicamente la finestra 
     InitWindow(larghezza_schermo, altezza_schermo, "Il mio primo Roguelike in C!");
-
     SetTargetFPS(60);
 
+    //creazione pg con suo sprite
     Entita eroe=crea_player(400,300);
-
     Texture2D eroe_sprite=LoadTexture("assets/Hero.png");
-
     //adattamento del personaggio alle dim del suo sprite
     eroe.height=eroe_sprite.height/4;
     eroe.width=eroe_sprite.width/9;
-
-    Rectangle frame_rec={0.0f, 0.0f, (float)eroe.width, (float)eroe.height};
+    Rectangle frame_rec={0.0f, 0.0f, (float)eroe.width, (float)eroe.height}; //mirino spritesheet
 
     int frame_corrente=0; //tiene traccia di quale tra gli 8 disegnini stamo vedendo
     int count_frame=0; //cronometro per rallentare animazione
@@ -46,7 +43,31 @@ int main(void)
     
         // --- A. FASE DI INPUT & UPDATE (Fisica e Logica) ---
         StatoInput input_corrente=leggi_input_player();
+        float prev_x=eroe.x;
+        float prev_y=eroe.y;
+
         muovi_player(&eroe, input_corrente);
+
+        for(int i=0; i<5; i++){ //righe
+                for(int j=0; j<5; j++){ //colonne
+                    int pos_j=j*dim_tile;
+                    int pos_i=i*dim_tile;
+
+                    int tipo_cella=mappa[i][j];
+
+                    if(tipo_cella==1){
+                        Rectangle hitb_player={eroe.x, eroe.y, eroe.width, eroe.height};
+                        Rectangle hitb_wall={pos_j, pos_i, dim_tile, dim_tile};
+
+                         if(CheckCollisionRecs(hitb_player, hitb_wall)){
+                        // Scontro rilevato! Annulla il movimento rimettendo le vecchie coordinate
+                        eroe.x = prev_x;
+                        eroe.y = prev_y;
+                    }
+
+                    }
+                }
+            }
 
         if(input_corrente.up || input_corrente.down || input_corrente.sx || input_corrente.dx){
             count_frame+=1;
@@ -91,7 +112,7 @@ int main(void)
 
 
         // --- B. FASE DI DISEGNO (Draw) ---
-        BeginDrawing(); // Diciamo alla scheda video: "Iniziamo a pitturare!"
+        BeginDrawing(); //Iniziamo a disegnare
 
             // 1. Pulisce lo schermo dal frame precedente (Fondamentale!)
             // Usiamo il nero
@@ -120,7 +141,7 @@ int main(void)
             
             DrawText("Premi ESC per uscire.", 280, 330, 20, DARKGRAY);
 
-        EndDrawing(); // Diciamo alla scheda video: "Ho finito, manda tutto a schermo!"
+        EndDrawing(); //Manda tutto a schermo
     }
 
     UnloadTexture(eroe_sprite);
