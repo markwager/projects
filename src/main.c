@@ -29,7 +29,14 @@ int main(void)
     int count_frame=0; //cronometro per rallentare animazione
     int vel_anim=8; //quanti frame al secondio voglio vedere
 
-
+    int mappa[5][5]={
+    {1, 1, 1, 1, 1},
+    {1, 0, 0, 0, 1},
+    {1, 0, 1, 0, 1},
+    {1, 0, 0, 0, 1},
+    {1, 1, 1, 1, 1}
+    }; //0 è il pavimento, 1 il muro
+    int dim_tile=64;
 
     // ========================================================================
     // 2. IL GAME LOOP INFINITO
@@ -89,6 +96,24 @@ int main(void)
             // 1. Pulisce lo schermo dal frame precedente (Fondamentale!)
             // Usiamo il nero
             ClearBackground(BLACK);
+
+            for(int i=0; i<5; i++){ //righe
+                for(int j=0; j<5; j++){ //colonne
+                    int pos_j=j*dim_tile;
+                    int pos_i=i*dim_tile;
+
+                    int tipo_cella=mappa[i][j];
+
+                    if(tipo_cella==0){
+                        DrawRectangle(pos_j, pos_i, dim_tile, dim_tile, DARKGRAY);
+                    }
+
+                    else{
+                        DrawRectangle(pos_j, pos_i, dim_tile, dim_tile, GRAY);
+
+                    }
+                }
+            }
             
             DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, WHITE);            // 2. Disegna un testo al centro dello schermo (X, Y, Dimensione, Colore)
             DrawText("Benvenuto nel Dungeon!", 220, 280, 30, GREEN);
