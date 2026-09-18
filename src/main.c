@@ -44,10 +44,7 @@ int main(void)
         // --- A. FASE DI INPUT & UPDATE (Fisica e Logica) ---
         StatoInput input_corrente=leggi_input_player();
         float prev_x=eroe.x;
-        float prev_y=eroe.y;
-
-        muovi_player(&eroe, input_corrente);
-
+        muovi_player_x(&eroe, input_corrente);
         for(int i=0; i<5; i++){ //righe
                 for(int j=0; j<5; j++){ //colonne
                     int pos_j=j*dim_tile;
@@ -62,8 +59,28 @@ int main(void)
                          if(CheckCollisionRecs(hitb_player, hitb_wall)){
                         // Scontro rilevato! Annulla il movimento rimettendo le vecchie coordinate
                         eroe.x = prev_x;
-                        eroe.y = prev_y;
+                        }
+
                     }
+                }
+            }
+        float prev_y=eroe.y;
+        muovi_player_y(&eroe, input_corrente);
+        for(int i=0; i<5; i++){ //righe
+                for(int j=0; j<5; j++){ //colonne
+                    int pos_j=j*dim_tile;
+                    int pos_i=i*dim_tile;
+
+                    int tipo_cella=mappa[i][j];
+
+                    if(tipo_cella==1){
+                        Rectangle hitb_player={eroe.x, eroe.y, eroe.width, eroe.height};
+                        Rectangle hitb_wall={pos_j, pos_i, dim_tile, dim_tile};
+
+                         if(CheckCollisionRecs(hitb_player, hitb_wall)){
+                        // Scontro rilevato! Annulla il movimento rimettendo le vecchie coordinate
+                        eroe.y = prev_y;
+                        }
 
                     }
                 }
