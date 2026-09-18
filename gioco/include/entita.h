@@ -13,6 +13,8 @@ typedef struct{
 } Entita;
 
 Entita crea_player(int start_x, int start_y); //restituisce struct player
-void muovi_player(Entita *player, StatoInput input);
+//per i movimenti indipenmdenti rendendoli più fluidi
+void muovi_player_x(Entita *player, StatoInput input); 
+void muovi_player_y(Entita *player, StatoInput input);
 
 #endif

@@ -12,14 +12,7 @@ Entita crea_player(int start_x, int start_y){
     return giocatore;
 }
 
-void muovi_player(Entita *player, StatoInput input){
-    if(input.up){
-        player->y-=player->vel;
-    }
-
-    if(input.down){
-        player->y+=player->vel;
-    }
+void muovi_player_x(Entita *player, StatoInput input){
 
     if(input.sx){
         player->x-=player->vel;
@@ -29,16 +22,26 @@ void muovi_player(Entita *player, StatoInput input){
         player->x+=player->vel;
     }
 
-    if((player->y)<0){
-            player->y=0;
-    }
-
     if((player->x)<0){
             player->x=0;
     }
 
     if(player->x > GetScreenWidth()-(player->width)){
         player->x = GetScreenWidth()-(player->width);
+    }
+}
+
+void muovi_player_y(Entita *player, StatoInput input){
+    if(input.up){
+        player->y-=player->vel;
+    }
+
+    if(input.down){
+        player->y+=player->vel;
+    }
+
+    if((player->y)<0){
+            player->y=0;
     }
 
     if(player->y > GetScreenHeight()-(player->height)){
