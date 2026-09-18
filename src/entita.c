@@ -21,14 +21,6 @@ void muovi_player_x(Entita *player, StatoInput input){
     if(input.dx){
         player->x+=player->vel;
     }
-
-    if((player->x)<0){
-            player->x=0;
-    }
-
-    if(player->x > GetScreenWidth()-(player->width)){
-        player->x = GetScreenWidth()-(player->width);
-    }
 }
 
 void muovi_player_y(Entita *player, StatoInput input){
@@ -38,13 +30,5 @@ void muovi_player_y(Entita *player, StatoInput input){
 
     if(input.down){
         player->y+=player->vel;
-    }
-
-    if((player->y)<0){
-            player->y=0;
-    }
-
-    if(player->y > GetScreenHeight()-(player->height)){
-        player->y = GetScreenHeight()-(player->height);
     }
 }
