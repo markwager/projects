@@ -1,6 +1,31 @@
 #include "raylib.h"
+#include <stdbool.h>
 #include "../include/input.h"
 #include "../include/entita.h"
+
+bool check_coll_map(Rectangle hitb_player, int mappa[5][5], int dim_tile);
+
+bool check_coll_map(Rectangle hitb_player, int mappa[5][5], int dim_tile){
+            for(int i=0; i<5; i++){ //righe
+                for(int j=0; j<5; j++){ //colonne
+                    int pos_j=j*dim_tile;
+                    int pos_i=i*dim_tile;
+
+                    int tipo_cella=mappa[i][j];
+
+                    if(tipo_cella==1){
+                        Rectangle hitb_wall={pos_j, pos_i, dim_tile, dim_tile};
+
+                        if(CheckCollisionRecs(hitb_player, hitb_wall)){
+                        // Scontro rilevato! Annulla il movimento rimettendo le vecchie coordinate
+                            return true;
+                        }
+
+                    }
+                }
+            }
+            return false;
+}
 
 int main(void)
 {
@@ -45,46 +70,17 @@ int main(void)
         StatoInput input_corrente=leggi_input_player();
         float prev_x=eroe.x;
         muovi_player_x(&eroe, input_corrente);
-        for(int i=0; i<5; i++){ //righe
-                for(int j=0; j<5; j++){ //colonne
-                    int pos_j=j*dim_tile;
-                    int pos_i=i*dim_tile;
+        Rectangle hitbox_x={eroe.x, eroe.y, (float)eroe.width, (float)eroe.height};
+        if(check_coll_map(hitbox_x, mappa, dim_tile)){
+            eroe.x=prev_x;
+        }
 
-                    int tipo_cella=mappa[i][j];
-
-                    if(tipo_cella==1){
-                        Rectangle hitb_player={eroe.x, eroe.y, eroe.width, eroe.height};
-                        Rectangle hitb_wall={pos_j, pos_i, dim_tile, dim_tile};
-
-                         if(CheckCollisionRecs(hitb_player, hitb_wall)){
-                        // Scontro rilevato! Annulla il movimento rimettendo le vecchie coordinate
-                        eroe.x = prev_x;
-                        }
-
-                    }
-                }
-            }
         float prev_y=eroe.y;
         muovi_player_y(&eroe, input_corrente);
-        for(int i=0; i<5; i++){ //righe
-                for(int j=0; j<5; j++){ //colonne
-                    int pos_j=j*dim_tile;
-                    int pos_i=i*dim_tile;
-
-                    int tipo_cella=mappa[i][j];
-
-                    if(tipo_cella==1){
-                        Rectangle hitb_player={eroe.x, eroe.y, eroe.width, eroe.height};
-                        Rectangle hitb_wall={pos_j, pos_i, dim_tile, dim_tile};
-
-                         if(CheckCollisionRecs(hitb_player, hitb_wall)){
-                        // Scontro rilevato! Annulla il movimento rimettendo le vecchie coordinate
-                        eroe.y = prev_y;
-                        }
-
-                    }
-                }
-            }
+        Rectangle hitbox_y={eroe.x, eroe.y, (float)eroe.width, (float)eroe.height};
+        if(check_coll_map(hitbox_y, mappa, dim_tile)){
+            eroe.y=prev_y;
+        }
 
         if(input_corrente.up || input_corrente.down || input_corrente.sx || input_corrente.dx){
             count_frame+=1;
