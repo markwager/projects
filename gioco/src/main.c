@@ -3,11 +3,14 @@
 #include "../include/input.h"
 #include "../include/entita.h"
 
-bool check_coll_map(Rectangle hitb_player, int mappa[5][5], int dim_tile);
+#define COLONNE 20
+#define RIGHE 20
 
-bool check_coll_map(Rectangle hitb_player, int mappa[5][5], int dim_tile){
-            for(int i=0; i<5; i++){ //righe
-                for(int j=0; j<5; j++){ //colonne
+bool check_coll_map(Rectangle hitb_player, int mappa[RIGHE][COLONNE], int dim_tile);
+
+bool check_coll_map(Rectangle hitb_player, int mappa[RIGHE][COLONNE], int dim_tile){
+            for(int i=0; i<RIGHE; i++){ //righe
+                for(int j=0; j<COLONNE; j++){ //colonne
                     int pos_j=j*dim_tile;
                     int pos_i=i*dim_tile;
 
@@ -27,8 +30,7 @@ bool check_coll_map(Rectangle hitb_player, int mappa[5][5], int dim_tile){
             return false;
 }
 
-int main(void)
-{
+int main(void){
     // ========================================================================
     // 1. INIZIALIZZAZIONE (Setup) - Avviene una sola volta all'avvio
     // ========================================================================
@@ -40,7 +42,7 @@ int main(void)
     SetTargetFPS(60);
 
     //creazione pg con suo sprite
-    Entita eroe=crea_player(400,300);
+    Entita eroe=crea_player(100,100);
     Texture2D eroe_sprite=LoadTexture("assets/Hero.png");
     //adattamento del personaggio alle dim del suo sprite
     eroe.height=eroe_sprite.height/4;
@@ -51,14 +53,35 @@ int main(void)
     int count_frame=0; //cronometro per rallentare animazione
     int vel_anim=8; //quanti frame al secondio voglio vedere
 
-    int mappa[5][5]={
-    {1, 1, 1, 1, 1},
-    {1, 0, 0, 0, 1},
-    {1, 0, 1, 0, 1},
-    {1, 0, 0, 0, 1},
-    {1, 1, 1, 1, 1}
+    int mappa[RIGHE][COLONNE]={
+        {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+        {1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,1,0,0,0,1,1,1,0,0,0,1},
+        {1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,1},
+        {1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,1},
+        {1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1},
+        {1,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1},
+        {1,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,1,1,0,0,0,1,0,0,0,0,1,1,1,0,0,1},
+        {1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+        {1,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1,1,0,0,1},
+        {1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
     }; //0 è il pavimento, 1 il muro
     int dim_tile=64;
+
+    Camera2D eroe_cam={0};
+    eroe_cam.offset=(Vector2){larghezza_schermo/2.0f, altezza_schermo/2.0f}; //punto in cui camera fissa l'obiettivo
+    eroe_cam.rotation=0.0f;
+    eroe_cam.zoom=1.0f;
+
 
     // ========================================================================
     // 2. IL GAME LOOP INFINITO
@@ -70,14 +93,16 @@ int main(void)
         StatoInput input_corrente=leggi_input_player();
         float prev_x=eroe.x;
         muovi_player_x(&eroe, input_corrente);
-        Rectangle hitbox_x={eroe.x, eroe.y, (float)eroe.width, (float)eroe.height};
+        float margine_x=12.0f; //Tagliamo via l'aria trasparente a destra e sinistra
+        float margine_y=20.0f; //Ignoriamo la testa e le spalle
+        Rectangle hitbox_x={eroe.x+margine_x, eroe.y+margine_y, (float)eroe.width-(margine_x*2), (float)eroe.height-margine_y};
         if(check_coll_map(hitbox_x, mappa, dim_tile)){
             eroe.x=prev_x;
         }
 
         float prev_y=eroe.y;
         muovi_player_y(&eroe, input_corrente);
-        Rectangle hitbox_y={eroe.x, eroe.y, (float)eroe.width, (float)eroe.height};
+        Rectangle hitbox_y={eroe.x+margine_x, eroe.y+margine_y, (float)eroe.width-(margine_x*2), (float)eroe.height-margine_y};
         if(check_coll_map(hitbox_y, mappa, dim_tile)){
             eroe.y=prev_y;
         }
@@ -122,7 +147,7 @@ int main(void)
 
         }
 
-
+        eroe_cam.target=(Vector2){eroe.x+(eroe.width/2.0f), eroe.y+(eroe.height/2.0f)};
 
         // --- B. FASE DI DISEGNO (Draw) ---
         BeginDrawing(); //Iniziamo a disegnare
@@ -131,8 +156,9 @@ int main(void)
             // Usiamo il nero
             ClearBackground(BLACK);
 
-            for(int i=0; i<5; i++){ //righe
-                for(int j=0; j<5; j++){ //colonne
+            BeginMode2D(eroe_cam);
+            for(int i=0; i<RIGHE; i++){ //righe
+                for(int j=0; j<COLONNE; j++){ //colonne
                     int pos_j=j*dim_tile;
                     int pos_i=i*dim_tile;
 
@@ -149,7 +175,10 @@ int main(void)
                 }
             }
             
-            DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, WHITE);            // 2. Disegna un testo al centro dello schermo (X, Y, Dimensione, Colore)
+            DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, WHITE);
+            EndMode2D();
+
+            // 2. Disegna un testo al centro dello schermo (X, Y, Dimensione, Colore)
             DrawText("Benvenuto nel Dungeon!", 220, 280, 30, GREEN);
             
             DrawText("Premi ESC per uscire.", 280, 330, 20, DARKGRAY);
