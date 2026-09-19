@@ -6,7 +6,7 @@
 #define COLONNE 20
 #define RIGHE 20
 
-bool check_coll_map(Rectangle hitb_player, int mappa[RIGHE][COLONNE], int dim_tile);
+bool check_coll_map(Rectangle hitb_player, int mappa[RIGHE][COLONNE], int dim_tile); //controlla collisioni per movimento in orizz e vertic
 
 bool check_coll_map(Rectangle hitb_player, int mappa[RIGHE][COLONNE], int dim_tile){
             for(int i=0; i<RIGHE; i++){ //righe
@@ -17,10 +17,10 @@ bool check_coll_map(Rectangle hitb_player, int mappa[RIGHE][COLONNE], int dim_ti
                     int tipo_cella=mappa[i][j];
 
                     if(tipo_cella==1){
-                        Rectangle hitb_wall={pos_j, pos_i, dim_tile, dim_tile};
+                        Rectangle hitb_wall={pos_j, pos_i, dim_tile, dim_tile}; //hitbox muro
 
                         if(CheckCollisionRecs(hitb_player, hitb_wall)){
-                        // Scontro rilevato! Annulla il movimento rimettendo le vecchie coordinate
+                        //scontro rilevato!
                             return true;
                         }
 
@@ -49,7 +49,7 @@ int main(void){
     eroe.width=eroe_sprite.width/9;
     Rectangle frame_rec={0.0f, 0.0f, (float)eroe.width, (float)eroe.height}; //mirino spritesheet
 
-    int frame_corrente=0; //tiene traccia di quale tra gli 8 disegnini stamo vedendo
+    int frame_corrente=0; //tiene traccia di quale tra gli 8 disegnini stiamo vedendo
     int count_frame=0; //cronometro per rallentare animazione
     int vel_anim=8; //quanti frame al secondio voglio vedere
 
@@ -82,6 +82,11 @@ int main(void){
     eroe_cam.rotation=0.0f;
     eroe_cam.zoom=1.0f;
 
+    //teliset mappa
+    Texture2D tileset = LoadTexture("assets/tiles_map.png");
+    Rectangle floor={0.0f, 0.0f, 64.0f, 64.0f}; //mirino spritesheet
+    Rectangle wall={64.0f, 0.0f, 64.0f, 64.0f}; //mirino spritesheet
+
 
     // ========================================================================
     // 2. IL GAME LOOP INFINITO
@@ -91,13 +96,13 @@ int main(void){
     
         // --- A. FASE DI INPUT & UPDATE (Fisica e Logica) ---
         StatoInput input_corrente=leggi_input_player();
-        float prev_x=eroe.x;
+        float prev_x=eroe.x; //salva pos x precedente
         muovi_player_x(&eroe, input_corrente);
-        float margine_x=12.0f; //Tagliamo via l'aria trasparente a destra e sinistra
-        float margine_y=20.0f; //Ignoriamo la testa e le spalle
-        Rectangle hitbox_x={eroe.x+margine_x, eroe.y+margine_y, (float)eroe.width-(margine_x*2), (float)eroe.height-margine_y};
+        float margine_x=12.0f; //tagliamo via l'aria trasparente a destra e sinistra
+        float margine_y=20.0f; //ignoriamo la testa e le spalle
+        Rectangle hitbox_x={eroe.x+margine_x, eroe.y+margine_y, (float)eroe.width-(margine_x*2), (float)eroe.height-margine_y}; //rimpiccioliamo hitbox player
         if(check_coll_map(hitbox_x, mappa, dim_tile)){
-            eroe.x=prev_x;
+            eroe.x=prev_x; //Annulla il movimento rimettendo le vecchie coordinate
         }
 
         float prev_y=eroe.y;
@@ -164,29 +169,30 @@ int main(void){
 
                     int tipo_cella=mappa[i][j];
 
-                    if(tipo_cella==0){
-                        DrawRectangle(pos_j, pos_i, dim_tile, dim_tile, DARKGRAY);
+                    if(tipo_cella == 0){
+                    // Disegna il pavimento
+                        DrawTextureRec(tileset, floor, (Vector2){pos_j, pos_i}, WHITE);
                     }
-
                     else{
-                        DrawRectangle(pos_j, pos_i, dim_tile, dim_tile, GRAY);
-
+                    // Disegna il muro
+                        DrawTextureRec(tileset, wall, (Vector2){pos_j, pos_i}, WHITE);
                     }
                 }
             }
             
-            DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, WHITE);
+            DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, WHITE); //ritaglia immagine spritesheet
             EndMode2D();
 
             // 2. Disegna un testo al centro dello schermo (X, Y, Dimensione, Colore)
-            DrawText("Benvenuto nel Dungeon!", 220, 280, 30, GREEN);
+            //DrawText("Benvenuto nel Dungeon!", 220, 280, 30, GREEN);
             
-            DrawText("Premi ESC per uscire.", 280, 330, 20, DARKGRAY);
+            //DrawText("Premi ESC per uscire.", 280, 330, 20, DARKGRAY);
 
         EndDrawing(); //Manda tutto a schermo
     }
 
     UnloadTexture(eroe_sprite);
+    UnloadTexture(tileset);
 
     // ========================================================================
     // 3. CHIUSURA E PULIZIA (De-inizializzazione)
