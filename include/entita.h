@@ -21,8 +21,17 @@ typedef struct {
     int tipo; //distinguere tra chiavi e pozioni in futuro
 } Oggetto;
 
+typedef struct {
+    float x;
+    float y;
+    float width;
+    float height;
+    bool attivo;
+} Nemico;
+
 Entita crea_player(int start_x, int start_y); //restituisce struct player
-//per i movimenti indipenmdenti rendendoli più fluidi
+
+//per i movimenti indipendenti rendendoli più fluidi
 void muovi_player_x(Entita *player, StatoInput input); 
 void muovi_player_y(Entita *player, StatoInput input);
 
