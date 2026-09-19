@@ -2,6 +2,8 @@
 #include <stdbool.h>
 #include "../include/input.h"
 #include "../include/entita.h"
+#include "../include/pathfinding.h"
+#include <math.h>
 
 #define COLONNE 20
 #define RIGHE 20
@@ -122,6 +124,25 @@ int mappa[RIGHE][COLONNE]={
 
     int punteggio=0;
 
+    //nemico
+    Texture2D mostro_sprite = LoadTexture("assets/enemy.png"); 
+    Nemico mostro;
+    // Adatta questi valori a quanti disegnini ci sono nel tuo file (es. se ha 4 colonne e 1 riga)
+    int colonne_sprite_mostro=7; 
+    int righe_sprite_mostro=4;
+    mostro.width = mostro_sprite.width/colonne_sprite_mostro;
+    mostro.height = mostro_sprite.height/righe_sprite_mostro;
+    
+    mostro.x = 14 * dim_tile; // Lo facciamo nascere lontano (es. Colonna 14)
+    mostro.y = 12 * dim_tile; // Riga 12
+    mostro.attivo = true;
+
+    // Mirino per l'animazione del mostro
+    Rectangle frame_rec_mostro = {0.0f, 0.0f, (float)mostro.width, (float)mostro.height};
+    int frame_corrente_mostro = 0;
+    int count_frame_mostro = 0;
+    int direzione_mostro = 0; // Memorizza dove sta guardando
+
     // ========================================================================
     // 2. IL GAME LOOP INFINITO
     // ========================================================================
@@ -134,6 +155,7 @@ int mappa[RIGHE][COLONNE]={
         muovi_player_x(&eroe, input_corrente);
         float margine_x=12.0f; //tagliamo via l'aria trasparente a destra e sinistra
         float margine_y=20.0f; //ignoriamo la testa e le spalle
+        
         Rectangle hitbox_x={eroe.x+margine_x, eroe.y+margine_y, (float)eroe.width-(margine_x*2), (float)eroe.height-margine_y}; //rimpiccioliamo hitbox player
         if(check_coll_map(hitbox_x, mappa, dim_tile)){
             eroe.x=prev_x; //Annulla il movimento rimettendo le vecchie coordinate
@@ -188,7 +210,85 @@ int mappa[RIGHE][COLONNE]={
 
         eroe_cam.target=(Vector2){eroe.x+(eroe.width/2.0f), eroe.y+(eroe.height/2.0f)};
 
-        Rectangle rect_eroe={eroe.x+margine_x, eroe.y+margine_y, (float)eroe.width-(margine_x*2), (float)eroe.height-margine_y};
+        Rectangle rect_eroe = {
+            eroe.x + margine_x, 
+            eroe.y + margine_y, 
+            (float)eroe.width - (margine_x * 2), 
+            (float)eroe.height - margine_y
+        };
+
+       // --- LOGICA E FISICA DEL NEMICO (Movimento Fluido e Anti-Sfarfallio) ---
+        if(mostro.attivo){
+            float vel_mostro = 1.5f; 
+            float prev_m_x = mostro.x;
+            float prev_m_y = mostro.y;
+            bool in_movimento = false;
+            
+            // Hitbox molto ridotta per scivolare dolcemente attorno agli spigoli
+            float margine_m_x = 18.0f; 
+            float margine_m_y = 20.0f;
+
+            // 1. IL CERVELLO CALCOLA: qual è il centro della prossima casella utile?
+            Vector2 obiettivo = calcola_prossimo_passo(mostro, eroe, mappa, dim_tile);
+
+            // 2. MOVIMENTO FLUIDO (Diagonali permesse, fine dei tremolii!)
+            float dist_x = obiettivo.x - mostro.x;
+            float dist_y = obiettivo.y - mostro.y;
+
+            // Movimento su X
+            if (fabs(dist_x) > vel_mostro) { // Se è lontano, fai un passo
+                mostro.x += (dist_x > 0) ? vel_mostro : -vel_mostro;
+                in_movimento = true;
+            } else {
+                mostro.x = obiettivo.x; // FRENO ANTI-VIBRAZIONE: se è vicino, allineati perfettamente
+            }
+            
+            // Controllo muri su X per scivolare
+            Rectangle hitbox_m_x = {mostro.x + margine_m_x, mostro.y + margine_m_y, mostro.width - (margine_m_x * 2), mostro.height - margine_m_y};
+            if (check_coll_map(hitbox_m_x, mappa, dim_tile)) mostro.x = prev_m_x;
+
+            // Movimento su Y
+            if (fabs(dist_y) > vel_mostro) {
+                mostro.y += (dist_y > 0) ? vel_mostro : -vel_mostro;
+                in_movimento = true;
+            } else {
+                mostro.y = obiettivo.y; // FRENO ANTI-VIBRAZIONE
+            }
+            
+            // Controllo muri su Y per scivolare
+            Rectangle hitbox_m_y = {mostro.x + margine_m_x, mostro.y + margine_m_y, mostro.width - (margine_m_x * 2), mostro.height - margine_m_y};
+            if (check_coll_map(hitbox_m_y, mappa, dim_tile)) mostro.y = prev_m_y;
+
+            // 3. ANIMAZIONE DOMINANTE (Elimina lo sfarfallio)
+            if (in_movimento) {
+                // Il mostro guarda fisso nell'asse dove sta camminando di più
+                if (fabs(dist_x) > fabs(dist_y)) {
+                    direzione_mostro = (dist_x > 0) ? 3 : 1; // 3=Destra, 1=Sinistra
+                } else {
+                    direzione_mostro = (dist_y > 0) ? 2 : 0; // 2=Basso, 0=Alto
+                }
+
+                count_frame_mostro++;
+                if (count_frame_mostro > (60 / vel_anim)) {
+                    count_frame_mostro = 0;
+                    frame_corrente_mostro++;
+                    if (frame_corrente_mostro >= colonne_sprite_mostro) frame_corrente_mostro = 0;
+                }
+            } else {
+                frame_corrente_mostro = 0; 
+            }
+            
+            frame_rec_mostro.x = (float)frame_corrente_mostro * (float)mostro.width;
+            frame_rec_mostro.y = (float)direzione_mostro * (float)mostro.height;
+
+            // 4. IL MORSO
+            Rectangle rect_mostro = {mostro.x + margine_m_x, mostro.y + margine_m_y, mostro.width - (margine_m_x * 2), mostro.height - margine_m_y};
+            if (CheckCollisionRecs(rect_eroe, rect_mostro)) {
+                eroe.x = 100;
+                eroe.y = 100;
+            }
+        }
+
         int dim_ogg_fisico=16; //quanto è grande l'oggetto fisicamente
         float offset_fisico=(dim_tile-dim_ogg_fisico)/2.0f; //calcolo per centrarlo
 
@@ -257,7 +357,9 @@ int mappa[RIGHE][COLONNE]={
 
                 }
             }
-            
+            if(mostro.attivo){
+                DrawTextureRec(mostro_sprite, frame_rec_mostro, (Vector2){mostro.x, mostro.y}, WHITE);
+            }
             DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, WHITE); //ritaglia immagine spritesheet
             EndMode2D();
 
@@ -269,6 +371,7 @@ int mappa[RIGHE][COLONNE]={
     UnloadTexture(eroe_sprite);
     UnloadTexture(tileset);
     UnloadTexture(oggetti_sprite);
+    UnloadTexture(mostro_sprite);
 
     // ========================================================================
     // 3. CHIUSURA E PULIZIA (De-inizializzazione)
