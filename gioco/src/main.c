@@ -55,40 +55,72 @@ int main(void){
     int count_frame=0; //cronometro per rallentare animazione
     int vel_anim=8; //quanti frame al secondio voglio vedere
 
-    int mappa[RIGHE][COLONNE]={
+int mappa[RIGHE][COLONNE]={
         {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-        {1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,1,0,0,0,1,1,1,0,0,0,1},
-        {1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,1},
-        {1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,1},
-        {1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1},
-        {1,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1},
-        {1,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,1,1,0,0,0,1,0,0,0,0,1,1,1,0,0,1},
-        {1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
-        {1,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1,1,0,0,1},
-        {1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,110,110,110,110,110,110,110,110,1,110,110,110,110,110,110,110,110,110,1},
+        {1,110,110,110,110,110,110,110,110,1,110,110,110,1,1,1,110,110,110,1},
+        {1,110,110,110,110,1,1,110,110,110,110,110,110,110,110,1,110,110,110,1},
+        {1,110,110,110,110,1,1,110,110,110,110,110,110,110,110,1,110,110,110,1},
+        {1,110,1,1,110,110,110,110,110,110,110,110,110,110,110,1,110,110,110,1},
+        {1,110,110,1,110,110,110,110,110,110,110,1,1,110,110,110,110,110,110,1},
+        {1,110,110,1,110,110,110,110,110,110,110,1,1,110,110,110,110,110,110,1},
+        {1,110,110,110,110,110,110,110,110,110,110,110,110,110,110,110,110,110,110,1},
+        {1,1,1,1,1,110,110,110,110,110,110,110,110,110,110,110,110,110,110,1},
+        {1,110,110,110,110,110,110,110,110,1,1,1,1,1,110,110,110,110,110,1},
+        {1,110,110,110,110,110,110,110,110,1,110,110,110,110,110,110,110,110,110,1},
+        {1,110,110,110,1,1,110,110,110,1,110,110,110,110,110,110,110,110,110,1},
+        {1,110,110,110,1,1,110,110,110,1,110,110,110,110,1,1,1,110,110,1},
+        {1,110,110,110,110,110,110,110,110,1,110,110,110,110,1,110,110,110,110,1},
+        {1,110,110,110,110,110,110,110,110,110,110,110,110,110,1,110,110,110,110,1},
+        {1,110,110,1,1,1,1,110,110,110,110,110,110,110,1,1,1,110,110,1},
+        {1,110,110,110,110,110,1,110,110,110,110,110,110,110,110,110,110,110,110,1},
+        {1,110,110,110,110,110,1,110,110,110,110,110,110,110,110,110,110,110,110,1},
         {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
-    }; //0 è il pavimento, 1 il muro
+    }; //110 è il pavimento, 1 il muro
     int dim_tile=64;
-
-    Camera2D eroe_cam={0};
-    eroe_cam.offset=(Vector2){larghezza_schermo/2.0f, altezza_schermo/2.0f}; //punto in cui camera fissa l'obiettivo
-    eroe_cam.rotation=0.0f;
-    eroe_cam.zoom=1.0f;
-
     //tileset mappa
     int col_tileset=114; //colonne
     Texture2D tileset = LoadTexture("assets/tiles_map.png");
     float vera_larghezza_tile = (float)tileset.width / col_tileset;
     float vera_altezza_tile = (float)tileset.height;
+
+    //camera eroe
+    Camera2D eroe_cam={0};
+    eroe_cam.offset=(Vector2){larghezza_schermo/2.0f, altezza_schermo/2.0f}; //punto in cui camera fissa l'obiettivo
+    eroe_cam.rotation=0.0f;
+    eroe_cam.zoom=1.0f;
+
+    //oggetti
+    Texture2D oggetti_sprite=LoadTexture("assets/objects.png");
+    int dim_ogg=64;
+    const int NUM_OGGETTI=4;
+    Oggetto lista_oggetti[NUM_OGGETTI];
+
+    lista_oggetti[0].x=4*dim_tile; //riga 5 in mappa
+    lista_oggetti[0].y=3*dim_tile; //colonna 3 in mappa
+    lista_oggetti[0].width=dim_ogg;
+    lista_oggetti[0].height=dim_ogg;
+    lista_oggetti[0].attivo=true;
+
+    lista_oggetti[1].x=10*dim_tile; 
+    lista_oggetti[1].y=11*dim_tile; 
+    lista_oggetti[1].width=dim_ogg;
+    lista_oggetti[1].height=dim_ogg;
+    lista_oggetti[1].attivo=true;
+
+    lista_oggetti[2].x=6*dim_tile; 
+    lista_oggetti[2].y=7*dim_tile; 
+    lista_oggetti[2].width=dim_ogg;
+    lista_oggetti[2].height=dim_ogg;
+    lista_oggetti[2].attivo=true;
+
+    lista_oggetti[3].x=9*dim_tile; 
+    lista_oggetti[3].y=5*dim_tile; 
+    lista_oggetti[3].width=dim_ogg;
+    lista_oggetti[3].height=dim_ogg;
+    lista_oggetti[3].attivo=true;
+
+    int punteggio=0;
 
     // ========================================================================
     // 2. IL GAME LOOP INFINITO
@@ -156,6 +188,26 @@ int main(void){
 
         eroe_cam.target=(Vector2){eroe.x+(eroe.width/2.0f), eroe.y+(eroe.height/2.0f)};
 
+        Rectangle rect_eroe={eroe.x+margine_x, eroe.y+margine_y, (float)eroe.width-(margine_x*2), (float)eroe.height-margine_y};
+        int dim_ogg_fisico=16; //quanto è grande l'oggetto fisicamente
+        float offset_fisico=(dim_tile-dim_ogg_fisico)/2.0f; //calcolo per centrarlo
+
+        for (int i = 0; i < NUM_OGGETTI; i++) {
+            //controlla se l'oggetto è ancora attivo
+            if (lista_oggetti[i].attivo == true) {
+                
+                // Creiamo temporaneamente un rettangolo (hitbox) anche per l'oggetto, per usare CheckCollisionRecs
+                Rectangle rect_oggetto = {lista_oggetti[i].x+offset_fisico, lista_oggetti[i].y+offset_fisico, (float)dim_ogg_fisico, (float)dim_ogg_fisico};
+                
+                // Se il giocatore "tocca" l'oggetto
+                if (CheckCollisionRecs(rect_eroe, rect_oggetto)) {
+                    lista_oggetti[i].attivo = false; // L'oggetto viene "spento", raccolto!
+                    punteggio += 1; // Aumentiamo i punti
+                    // Potresti anche inserire qui un "PlaySound(suono_moneta);" in futuro!
+                }
+            }
+        }
+
         // --- B. FASE DI DISEGNO (Draw) ---
         BeginDrawing(); //Iniziamo a disegnare
 
@@ -180,20 +232,43 @@ int main(void){
                     
                 }
             }
+
+            // [Dentro BeginDrawing(), dopo aver chiuso i cicli FOR della Mappa]
+
+            // Facciamo finta che l'oggetto da visualizzare sia il primo del foglio (quindi partiamo da x=0)
+            Rectangle ritaglio_oggetto = {0.0f, 0.0f, (float)dim_ogg, (float)dim_ogg}; 
+            int dim_ogg_visivo=16; //quanto lo voglio grande
+            float offset=(dim_tile-dim_ogg_visivo)/2.0f; //calcolo centro esatto
+
+            for (int i = 0; i < NUM_OGGETTI; i++){
+                // Disegnamo l'oggetto SOLO se non è stato raccolto (è attivo)
+                if (lista_oggetti[i].attivo == true){
+
+                   // 4. Crei la hitbox fisica E visiva piccolina e centrata!
+                    Rectangle destinazione = {
+                    lista_oggetti[i].x + offset, 
+                    lista_oggetti[i].y + offset, 
+                    (float)dim_ogg_visivo, 
+                    (float)dim_ogg_visivo
+                    };
+
+                    // 5. Raylib fa la magia: prende il 256 e lo schiaccia nel 32x32 centrato!
+                     DrawTexturePro(oggetti_sprite, ritaglio_oggetto, destinazione, (Vector2){0,0}, 0.0f, WHITE);
+
+                }
+            }
             
             DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, WHITE); //ritaglia immagine spritesheet
             EndMode2D();
 
-            // 2. Disegna un testo al centro dello schermo (X, Y, Dimensione, Colore)
-            //DrawText("Benvenuto nel Dungeon!", 220, 280, 30, GREEN);
-            
-            //DrawText("Premi ESC per uscire.", 280, 330, 20, DARKGRAY);
+            DrawText(TextFormat("PUNTEGGIO: %d", punteggio), 10, 10, 30, GREEN);
 
         EndDrawing(); //Manda tutto a schermo
     }
 
     UnloadTexture(eroe_sprite);
     UnloadTexture(tileset);
+    UnloadTexture(oggetti_sprite);
 
     // ========================================================================
     // 3. CHIUSURA E PULIZIA (De-inizializzazione)

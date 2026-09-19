@@ -12,6 +12,15 @@ typedef struct{
     int height;
 } Entita;
 
+typedef struct {
+    float x;
+    float y;
+    float width;
+    float height;
+    bool attivo; //se è true l'oggetto esiste. Se è false, è stato raccolto e scompare.
+    int tipo; //distinguere tra chiavi e pozioni in futuro
+} Oggetto;
+
 Entita crea_player(int start_x, int start_y); //restituisce struct player
 //per i movimenti indipenmdenti rendendoli più fluidi
 void muovi_player_x(Entita *player, StatoInput input); 
