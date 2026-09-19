@@ -45,8 +45,10 @@ int main(void){
     Entita eroe=crea_player(100,100);
     Texture2D eroe_sprite=LoadTexture("assets/Hero.png");
     //adattamento del personaggio alle dim del suo sprite
-    eroe.height=eroe_sprite.height/4;
-    eroe.width=eroe_sprite.width/9;
+    int colonne_sprite_eroe=9; //num frame per ogni animazione
+    int righe_sprite_eroe=4;   //num animazioni (su, giù, ecc.)
+    eroe.height=eroe_sprite.height/righe_sprite_eroe; //=64
+    eroe.width=eroe_sprite.width/colonne_sprite_eroe; //=64
     Rectangle frame_rec={0.0f, 0.0f, (float)eroe.width, (float)eroe.height}; //mirino spritesheet
 
     int frame_corrente=0; //tiene traccia di quale tra gli 8 disegnini stiamo vedendo
@@ -82,11 +84,11 @@ int main(void){
     eroe_cam.rotation=0.0f;
     eroe_cam.zoom=1.0f;
 
-    //teliset mappa
+    //tileset mappa
+    int col_tileset=114; //colonne
     Texture2D tileset = LoadTexture("assets/tiles_map.png");
-    Rectangle floor={0.0f, 0.0f, 64.0f, 64.0f}; //mirino spritesheet
-    Rectangle wall={64.0f, 0.0f, 64.0f, 64.0f}; //mirino spritesheet
-
+    float vera_larghezza_tile = (float)tileset.width / col_tileset;
+    float vera_altezza_tile = (float)tileset.height;
 
     // ========================================================================
     // 2. IL GAME LOOP INFINITO
@@ -169,14 +171,13 @@ int main(void){
 
                     int tipo_cella=mappa[i][j];
 
-                    if(tipo_cella == 0){
-                    // Disegna il pavimento
-                        DrawTextureRec(tileset, floor, (Vector2){pos_j, pos_i}, WHITE);
-                    }
-                    else{
-                    // Disegna il muro
-                        DrawTextureRec(tileset, wall, (Vector2){pos_j, pos_i}, WHITE);
-                    }
+                    //usiamo il numero letto dalla mappa per spostare la X del ritaglio
+                    float posizione_ritaglio_x = (float)tipo_cella * vera_larghezza_tile;
+                    //UNICO Rectangle che si sposta da solo
+                    Rectangle mirino_dinamico = {posizione_ritaglio_x, 0.0f, vera_larghezza_tile, vera_altezza_tile};
+                    //UNICA riga per disegnare TUTTI i blocchi
+                    DrawTextureRec(tileset, mirino_dinamico, (Vector2){pos_j, pos_i}, WHITE);
+                    
                 }
             }
             
