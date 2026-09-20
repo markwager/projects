@@ -124,12 +124,14 @@ int mappa[RIGHE][COLONNE]={
 
     //nemico
     Texture2D mostro_sprite = LoadTexture("assets/enemy.png"); 
-    Nemico mostro;
-    // Adatta questi valori a quanti disegnini ci sono nel tuo file (es. se ha 4 colonne e 1 riga)
-    int colonne_sprite_mostro=7; 
-    int righe_sprite_mostro=4;
-    mostro.width = mostro_sprite.width/colonne_sprite_mostro;
-    mostro.height = mostro_sprite.height/righe_sprite_mostro;
+    // USIAMO LA NOSTRA NUOVA FUNZIONE (Colonna 14, Riga 12)
+    Nemico mostro = crea_mostro(14, 12, dim_tile);
+    
+    // Adattamento al suo spritesheet
+    int colonne_sprite_mostro = 7; 
+    int righe_sprite_mostro = 4;
+    mostro.width = mostro_sprite.width / colonne_sprite_mostro;
+    mostro.height = mostro_sprite.height / righe_sprite_mostro;
     
     mostro.x = 14 * dim_tile; // Lo facciamo nascere lontano (es. Colonna 14)
     mostro.y = 12 * dim_tile; // Riga 12
@@ -168,6 +170,9 @@ int mappa[RIGHE][COLONNE]={
     
         // --- A. FASE DI INPUT & UPDATE (Fisica e Logica) ---
         StatoInput input_corrente=leggi_input_player();
+        // --- GESTIONE INVULNERABILITÀ ---
+        if (eroe.iframes > 0) eroe.iframes--;
+        if (mostro.iframes > 0) mostro.iframes--;
         float prev_x=eroe.x; //salva pos x precedente
         muovi_player_x(&eroe, input_corrente);
         float margine_x=12.0f; //tagliamo via l'aria trasparente a destra e sinistra
@@ -228,19 +233,28 @@ int mappa[RIGHE][COLONNE]={
             sta_attaccando = true;
             timer_attacco = 15; // Il colpo dura 15 frame 
             
-            float raggio_spada = 45.0f; // Lunghezza del colpo
-            float spessore = 40.0f;     // Larghezza del colpo
+            float raggio_spada = 60.0f; // L'abbiamo allungata un po' perché ora parte da più indietro
+            float spessore = 50.0f;     // Resa leggermente più spessa e generosa
             
-            // Crea una zona di danno temporanea davanti all'eroe
-            if (direzione_eroe == 0) hitbox_spada = (Rectangle){eroe.x + eroe.width/2 - spessore/2, eroe.y - raggio_spada, spessore, raggio_spada}; // Su
-            else if (direzione_eroe == 2) hitbox_spada = (Rectangle){eroe.x + eroe.width/2 - spessore/2, eroe.y + eroe.height, spessore, raggio_spada}; // Giù
-            else if (direzione_eroe == 1) hitbox_spada = (Rectangle){eroe.x - raggio_spada, eroe.y + eroe.height/2 - spessore/2, raggio_spada, spessore}; // Sx
-            else if (direzione_eroe == 3) hitbox_spada = (Rectangle){eroe.x + eroe.width, eroe.y + eroe.height/2 - spessore/2, raggio_spada, spessore}; // Dx
+            // Calcoliamo il centro esatto dell'eroe
+            float centro_x = eroe.x + (eroe.width / 2.0f);
+            float centro_y = eroe.y + (eroe.height / 2.0f);
 
-            // Se il colpo tocca il mostro, lui muore
+            // Ora la zona di danno parte dal CENTRO dell'eroe, coprendo anche chi gli sta addosso!
+            if (direzione_eroe == 0) hitbox_spada = (Rectangle){centro_x - spessore/2, centro_y - raggio_spada, spessore, raggio_spada}; // Su
+            else if (direzione_eroe == 2) hitbox_spada = (Rectangle){centro_x - spessore/2, centro_y, spessore, raggio_spada}; // Giù
+            else if (direzione_eroe == 1) hitbox_spada = (Rectangle){centro_x - raggio_spada, centro_y - spessore/2, raggio_spada, spessore}; // Sx
+            else if (direzione_eroe == 3) hitbox_spada = (Rectangle){centro_x, centro_y - spessore/2, raggio_spada, spessore}; // Dx
+
+            // Controllo della collisione con il mostro
             Rectangle rect_mostro_reale = {mostro.x + 18.0f, mostro.y + 20.0f, mostro.width - 36.0f, mostro.height - 20.0f};
-            if (mostro.attivo && CheckCollisionRecs(hitbox_spada, rect_mostro_reale)) {
-                mostro.attivo = false; 
+            if (mostro.attivo && CheckCollisionRecs(hitbox_spada, rect_mostro_reale) && mostro.iframes == 0) {
+                mostro.hp -= 1;
+                mostro.iframes = 30; // Mezzo secondo di invulnerabilità per il mostro
+                
+                if (mostro.hp <= 0) {
+                    mostro.attivo = false; 
+                }
             }
         }
 
@@ -321,9 +335,23 @@ int mappa[RIGHE][COLONNE]={
 
             // 4. IL MORSO
             Rectangle rect_mostro = {mostro.x + margine_m_x, mostro.y + margine_m_y, mostro.width - (margine_m_x * 2), mostro.height - margine_m_y};
-            if (CheckCollisionRecs(rect_eroe, rect_mostro)) {
-                eroe.x = 100;
-                eroe.y = 100;
+            if (CheckCollisionRecs(rect_eroe, rect_mostro) && eroe.iframes == 0) {
+                eroe.hp -= 25; // Danno all'eroe (ipotizzando 100 HP massimi, muore in 4 colpi)
+                eroe.iframes = 60; // 1 secondo di invulnerabilità per l'eroe
+                
+                punteggio -= 2;
+                if (punteggio < 0) punteggio = 0;
+
+                // Se l'eroe muore
+                if (eroe.hp <= 0) {
+                    eroe.x = 100;
+                    eroe.y = 100;
+                    eroe.hp = 100; // Ripristina HP
+                    
+                    // Riporta il mostro alla posizione originale
+                    mostro.x = 14 * dim_tile; 
+                    mostro.y = 12 * dim_tile; 
+                }
             }
         }
 
@@ -394,83 +422,78 @@ int mappa[RIGHE][COLONNE]={
 
                 }
             }
+            // --- GESTIONE COLORI LAMPEGGIO (DANNO) ---
+            Color colore_mostro = WHITE;
+            if (mostro.iframes > 0 && (mostro.iframes / 5) % 2 == 0) colore_mostro = RED;
+            
+            Color colore_eroe = WHITE;
+            if (eroe.iframes > 0 && (eroe.iframes / 5) % 2 == 0) colore_eroe = RED;
+
             if(mostro.attivo){
-                DrawTextureRec(mostro_sprite, frame_rec_mostro, (Vector2){mostro.x, mostro.y}, WHITE); //ritaglia immagine spritesheet mostro
+                // Disegna il mostro col suo colore (diventa rosso se colpito)
+                DrawTextureRec(mostro_sprite, frame_rec_mostro, (Vector2){mostro.x, mostro.y}, colore_mostro); 
             }
+            
             // 1. SPADA A TERRA
             if (spada_a_terra) {
-                // Usiamo il Frame 0 (la prima spada a sinistra del tuo foglio)
                 Rectangle ritaglio_terra = {0.0f, 0.0f, larghezza_spada, altezza_spada};
                 DrawTextureRec(spada_sprite, ritaglio_terra, (Vector2){rect_spada_terra.x, rect_spada_terra.y}, WHITE);
                 
-                // Disegniamo l'eroe
-                DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, WHITE);
+                // Disegniamo l'eroe (con colore_eroe per farlo lampeggiare se subisce danni a mani vuote)
+                DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, colore_eroe);
             } 
-            // 2. SPADA EQUIPAGGIATA (OVERLAY)
+            // 2. SPADA EQUIPAGGIATA (OVERLAY E ATTACCO)
             else if (ha_spada) {
                 float offset_spada_x = 0.0f;
                 float offset_spada_y = 0.0f;
-                
-                // Variabili per il mirino
                 float ritaglio_x = 0.0f; 
                 float larghezza_mirino = larghezza_spada;
                 float altezza_mirino = altezza_spada;
 
-                // --- LOGICA DI DIREZIONE E SPECCHIO (AGGIORNATA) ---
+                // --- LOGICA DI DIREZIONE, SPECCHIO E FENDENTE ---
                 if (direzione_eroe == 0) { 
-                    // SU: L'arma va dietro la schiena.
-                    ritaglio_x = 2.0f * larghezza_spada; 
-                    
-                    // Tiriamola molto più a destra verso il centro della schiena
-                    offset_spada_x = 40.0f; 
-                    offset_spada_y = 19.0f; 
+                    // SU: Se sta attaccando usa il fendente (frame 3), altrimenti la spada base in su (frame 2)
+                    ritaglio_x = (sta_attaccando ? 3.0f : 2.0f) * larghezza_spada; 
+                    offset_spada_x = 40.0f; offset_spada_y = 19.0f; 
                 } 
                 else if (direzione_eroe == 2) { 
-                    // GIÙ: L'arma va davanti, nella mano sinistra (alla nostra sinistra).
-                    ritaglio_x = 2.0f * larghezza_spada; 
+                    // GIÙ
+                    ritaglio_x = (sta_attaccando ? 3.0f : 2.0f) * larghezza_spada; 
                     altezza_mirino = -altezza_spada; 
-                    
-                    // Diminuiamo la X per farla scivolare a sinistra verso la mano
-                    offset_spada_x = 12.0f; 
-                    // Aumentiamo la Y per spingere l'elsa più in basso, verso il fianco
-                    offset_spada_y = 40.0f; 
+                    offset_spada_x = 12.0f; offset_spada_y = 40.0f; 
                 } 
                 else if (direzione_eroe == 3) { 
-                    // DESTRA: L'arma va sporta in avanti a destra.
-                    ritaglio_x = 0.0f; 
-                    
-                    // Tiriamola indietro verso il fianco dell'eroe
-                    offset_spada_x = 28.0f; 
-                    offset_spada_y = 28.0f; 
+                    // DESTRA: Se sta attaccando usa il fendente (frame 3), altrimenti spada base (frame 0)
+                    ritaglio_x = (sta_attaccando ? 3.0f : 0.0f) * larghezza_spada; 
+                    offset_spada_x = 28.0f; offset_spada_y = 28.0f; 
                 }
                 else if (direzione_eroe == 1) { 
-                    // SINISTRA: L'arma va sporta in avanti a sinistra.
-                    ritaglio_x = 0.0f; 
+                    // SINISTRA
+                    ritaglio_x = (sta_attaccando ? 3.0f : 0.0f) * larghezza_spada; 
                     larghezza_mirino = -larghezza_spada; 
-                    
-                    // Avviciniamola verso destra (verso il petto dell'eroe)
-                    offset_spada_x = 0.0f; 
-                    offset_spada_y = 28.0f; 
+                    offset_spada_x = 0.0f; offset_spada_y = 28.0f; 
                 }
 
-                // Creiamo il mirino con le misure specchiate
-                // (La Y è 0.0f perché hai una sola riga)
                 Rectangle frame_rec_spada = {ritaglio_x, 0.0f, larghezza_mirino, altezza_mirino};
 
-                // --- Z-INDEX (Chi copre chi) ---
+                // --- Z-INDEX (Chi copre chi, con l'eroe che lampeggia) ---
                 if (direzione_eroe == 0) {
-                    // Guarda in SU: Spada dietro la schiena
                     DrawTextureRec(spada_sprite, frame_rec_spada, (Vector2){eroe.x + offset_spada_x, eroe.y + offset_spada_y}, WHITE);
-                    DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, WHITE);
+                    DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, colore_eroe);
                 } else {
-                    // Guarda altrove: Spada davanti
-                    DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, WHITE);
+                    DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, colore_eroe);
                     DrawTextureRec(spada_sprite, frame_rec_spada, (Vector2){eroe.x + offset_spada_x, eroe.y + offset_spada_y}, WHITE);
                 }
-            }        EndMode2D();
+            }
+            
+            EndMode2D(); // Fine del disegno legato alla mappa e alla telecamera
 
-            //parte UI
-            DrawText(TextFormat("PUNTEGGIO: %d", punteggio), 10, 10, 30, GREEN);
+            // --- 5. INTERFACCIA UTENTE (UI) ---
+            DrawText(TextFormat("HP EROE: %d", eroe.hp), 10, 10, 20, RED);
+            if (mostro.attivo) {
+                DrawText(TextFormat("HP MOSTRO: %d", mostro.hp), 200, 10, 20, RED);
+            }
+            DrawText(TextFormat("PUNTEGGIO: %d", punteggio), 10, 40, 20, GREEN);
 
         EndDrawing(); //Manda tutto a schermo
     }
