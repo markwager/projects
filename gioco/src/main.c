@@ -4,6 +4,7 @@
 #include "../include/entita.h"
 #include "../include/pathfinding.h"
 #include "../include/ui.h"
+#include "../include/particelle.h"
 #include <stdio.h>
 #include <math.h>
 
@@ -62,6 +63,8 @@ int main(void){
     int frame_corrente=0; //tiene traccia di quale tra gli 8 disegnini stiamo vedendo
     int count_frame=0; //cronometro per rallentare animazione
     int vel_anim=8; //quanti frame al secondio voglio vedere
+    // ... setup del mostro ...
+    Particella sistema_sangue[MAX_PARTICELLE] = {0};
 
 int mappa[RIGHE][COLONNE]={
         {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
@@ -216,6 +219,11 @@ int mappa[RIGHE][COLONNE]={
                     // 4. Riattiviamo tutti gli oggetti sulla mappa
                     for(int i = 0; i < NUM_OGGETTI; i++) {
                         lista_oggetti[i].attivo = true;
+                    }
+
+                    // Pulisci il sangue dal pavimento!
+                    for (int i = 0; i < MAX_PARTICELLE; i++) {
+                        sistema_sangue[i].attiva = false;
                     }
 
                     // Ora che tutto è pulito, possiamo iniziare a giocare!
@@ -411,7 +419,8 @@ int mappa[RIGHE][COLONNE]={
                         mostro.hp -= 1;
                         mostro.iframes = 30; 
                         if (mostro.hp <= 0) {
-                            mostro.attivo = false; 
+                            mostro.attivo = false;
+                            GeneraSplatter(sistema_sangue, MAX_PARTICELLE, mostro.x, mostro.y); 
                         }
                     }
                 }
@@ -484,6 +493,7 @@ int mappa[RIGHE][COLONNE]={
                         if (punteggio < 0) punteggio = 0;
 
                         if (eroe.hp <= 0) {
+                            GeneraSplatter(sistema_sangue, MAX_PARTICELLE, eroe.x, eroe.y);
                             eroe.x = 100;
                             eroe.y = 100;
                             eroe.hp = 100; 
@@ -506,6 +516,22 @@ int mappa[RIGHE][COLONNE]={
                     }
                 }
 
+                // --- AGGIORNAMENTO FISICA SPLATTER ---
+                for (int i = 0; i < MAX_PARTICELLE; i++) {
+                    if (sistema_sangue[i].attiva) {
+                        if (sistema_sangue[i].vita > 0) {
+                            sistema_sangue[i].x += sistema_sangue[i].vel_x;
+                            sistema_sangue[i].y += sistema_sangue[i].vel_y;
+                            
+                            // "Frizione" per farle rallentare e fermare a terra
+                            sistema_sangue[i].vel_x *= 0.90f;
+                            sistema_sangue[i].vel_y *= 0.90f;
+                            
+                            sistema_sangue[i].vita--;
+                        }
+                    }
+                }
+
                 // --- B. FASE DI DISEGNO (Draw) ---
                 BeginDrawing(); 
                     ClearBackground(BLACK);
@@ -521,6 +547,19 @@ int mappa[RIGHE][COLONNE]={
                             float posizione_ritaglio_x = (float)tipo_cella * vera_larghezza_tile;
                             Rectangle mirino_dinamico = {posizione_ritaglio_x, 0.0f, vera_larghezza_tile, vera_altezza_tile};
                             DrawTextureRec(tileset, mirino_dinamico, (Vector2){pos_j, pos_i}, WHITE);
+                        }
+                    }
+
+                    // --- DISEGNO SANGUE SUL PAVIMENTO ---
+                    for (int i = 0; i < MAX_PARTICELLE; i++) {
+                        if (sistema_sangue[i].attiva) {
+                            DrawRectangle(
+                                (int)sistema_sangue[i].x, 
+                                (int)sistema_sangue[i].y, 
+                                (int)sistema_sangue[i].dimensione, 
+                                (int)sistema_sangue[i].dimensione, 
+                                sistema_sangue[i].colore
+                            );
                         }
                     }
 
