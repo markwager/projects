@@ -148,6 +148,7 @@ int mappa[RIGHE][COLONNE]={
     bool sta_attaccando=false;
     int timer_attacco=0;
     Rectangle hitbox_spada = {0};
+    int shake_timer = 0; // <-- NUOVO: Timer per il terremoto
 
     Texture2D spada_sprite = LoadTexture("assets/sword.png"); 
     bool ha_spada = false;     //l'eroe parte a mani vuote
@@ -161,6 +162,7 @@ int mappa[RIGHE][COLONNE]={
     float altezza_spada = (float)spada_sprite.height/righe_spada;
     // Scegliamo dove far apparire la spada (es. riga 2, colonna 3)
     Rectangle rect_spada_terra={3*dim_tile, 2*dim_tile, larghezza_spada, altezza_spada};
+
 
     // ========================================================================
     // 2. IL GAME LOOP INFINITO
@@ -211,8 +213,25 @@ int mappa[RIGHE][COLONNE]={
         if(input_corrente.dx) {frame_rec.y= 3.0f*(float)eroe.height; direzione_eroe = 3;}
 
         //aggiornamento camera
-        eroe_cam.target=(Vector2){eroe.x+(eroe.width/2.0f), eroe.y+(eroe.height/2.0f)};
-        Rectangle rect_eroe ={
+        //aggiornamento camera
+        eroe_cam.target = (Vector2){eroe.x + (eroe.width / 2.0f), eroe.y + (eroe.height / 2.0f)};
+
+        // --- GESTIONE SCREEN SHAKE ---
+        if (shake_timer > 0) {
+            shake_timer--; // Il timer scende
+            
+            // GetRandomValue è una funzione di Raylib. Scegliamo uno scostamento tra -8 e 8 pixel.
+            int offset_casuale_x = GetRandomValue(-8, 8);
+            int offset_casuale_y = GetRandomValue(-8, 8);
+            
+            // Applichiamo il tremolio rispetto al centro esatto dello schermo
+            eroe_cam.offset = (Vector2){ (larghezza_schermo / 2.0f) + offset_casuale_x, (altezza_schermo / 2.0f) + offset_casuale_y };
+        } else {
+            // Se non c'è il terremoto, la camera torna perfettamente ferma al centro
+            eroe_cam.offset = (Vector2){ larghezza_schermo / 2.0f, altezza_schermo / 2.0f };
+        }
+
+        Rectangle rect_eroe={
             eroe.x + margine_x, 
             eroe.y + margine_y, 
             (float)eroe.width-(margine_x * 2), 
@@ -338,7 +357,7 @@ int mappa[RIGHE][COLONNE]={
             if (CheckCollisionRecs(rect_eroe, rect_mostro) && eroe.iframes == 0) {
                 eroe.hp -= 25; // Danno all'eroe (ipotizzando 100 HP massimi, muore in 4 colpi)
                 eroe.iframes = 60; // 1 secondo di invulnerabilità per l'eroe
-                
+                shake_timer = 15; // <-- NUOVO: Fai tremare lo schermo per 15 frame (1/4 di secondo)
                 punteggio -= 2;
                 if (punteggio < 0) punteggio = 0;
 
