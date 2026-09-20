@@ -8,7 +8,8 @@
 typedef enum {
     STATO_MENU,
     STATO_OPZIONI,
-    STATO_GIOCO
+    STATO_GIOCO,
+    STATO_PAUSA
 } StatoGioco;
 
 // 2. Le Impostazioni
