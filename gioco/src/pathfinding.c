@@ -90,3 +90,25 @@ Vector2 calcola_prossimo_passo(Nemico mostro, Entita eroe, int mappa[RIGHE][COLO
 
     return (Vector2){next_x, next_y};
 }
+
+bool check_coll_map(Rectangle hitb_player, int mappa[RIGHE][COLONNE], int dim_tile){
+            for(int i=0; i<RIGHE; i++){ //righe
+                for(int j=0; j<COLONNE; j++){ //colonne
+                    int pos_j=j*dim_tile;
+                    int pos_i=i*dim_tile;
+
+                    int tipo_cella=mappa[i][j];
+
+                    if(tipo_cella==1){
+                        Rectangle hitb_wall={pos_j, pos_i, dim_tile, dim_tile}; //hitbox muro
+
+                        if(CheckCollisionRecs(hitb_player, hitb_wall)){
+                        //scontro rilevato!
+                            return true;
+                        }
+
+                    }
+                }
+            }
+            return false;
+}

@@ -8,38 +8,11 @@
 #include <stdio.h>
 #include <math.h>
 
-#define COLONNE 20
-#define RIGHE 20
-
-bool check_coll_map(Rectangle hitb_player, int mappa[RIGHE][COLONNE], int dim_tile); //controlla collisioni per movimento in orizz e vertic nella mappa
-
-bool check_coll_map(Rectangle hitb_player, int mappa[RIGHE][COLONNE], int dim_tile){
-            for(int i=0; i<RIGHE; i++){ //righe
-                for(int j=0; j<COLONNE; j++){ //colonne
-                    int pos_j=j*dim_tile;
-                    int pos_i=i*dim_tile;
-
-                    int tipo_cella=mappa[i][j];
-
-                    if(tipo_cella==1){
-                        Rectangle hitb_wall={pos_j, pos_i, dim_tile, dim_tile}; //hitbox muro
-
-                        if(CheckCollisionRecs(hitb_player, hitb_wall)){
-                        //scontro rilevato!
-                            return true;
-                        }
-
-                    }
-                }
-            }
-            return false;
-}
-
 int main(void){
     // ========================================================================
     // 1. INIZIALIZZAZIONE (Setup) - Avviene una sola volta all'avvio
     // ========================================================================
-    Impostazioni settings = { 0.5f, 800, 600 };
+    Impostazioni settings = {0.5f, 800, 600};
 
     //Crea fisicamente la finestra
     InitWindow(settings.larghezza_schermo, settings.altezza_schermo, "Il mio primo Roguelike in C!");
@@ -598,30 +571,55 @@ int mappa[RIGHE][COLONNE]={
                     } 
                     // 2. SPADA EQUIPAGGIATA
                     else if (ha_spada) {
-                        float offset_spada_x = 0.0f;
+float offset_spada_x = 0.0f;
                         float offset_spada_y = 0.0f;
                         float ritaglio_x = 0.0f; 
                         float larghezza_mirino = larghezza_spada;
                         float altezza_mirino = altezza_spada;
 
+                        // --- NUOVO: ONDEGGIAMENTO BRACCIO ---
+                        // Creiamo dei piccoli scostamenti in pixel per ogni frame (da 0 a 8)
+                        // NOTA: Dovrai aggiustare questi numeri (es. 2, -2, ecc.) guardando il tuo sprite!
+                        float mov_braccio_x[9] = {0, -2, -4, -2, 0, 2, 4, 2, 0}; 
+                        float mov_braccio_y[9] = {0, -1, -2, -1, 0, -1, -2, -1, 0}; // Per il saltello
+                        
+                        float extra_x = 0;
+                        float extra_y = 0;
+
+                        // Applichiamo il movimento SOLO se stiamo camminando e NON stiamo attaccando
+                        if (!sta_attaccando && count_frame > 0) {
+                            extra_x = mov_braccio_x[frame_corrente];
+                            extra_y = mov_braccio_y[frame_corrente];
+                        }
+
+                        // --- LOGICA DI DIREZIONE, SPECCHIO E FENDENTE ---
                         if (direzione_eroe == 0) { 
+                            // SU
                             ritaglio_x = (sta_attaccando ? 3.0f : 2.0f) * larghezza_spada; 
-                            offset_spada_x = 40.0f; offset_spada_y = 19.0f; 
+                            offset_spada_x = 40.0f; 
+                            offset_spada_y = 19.0f + extra_y; // Su e giù
                         } else if (direzione_eroe == 2) { 
+                            // GIÙ
                             ritaglio_x = (sta_attaccando ? 3.0f : 2.0f) * larghezza_spada; 
                             altezza_mirino = -altezza_spada; 
-                            offset_spada_x = 12.0f; offset_spada_y = 40.0f; 
+                            offset_spada_x = 12.0f; 
+                            offset_spada_y = 40.0f + extra_y; // Su e giù
                         } else if (direzione_eroe == 3) { 
+                            // DESTRA
                             ritaglio_x = (sta_attaccando ? 3.0f : 0.0f) * larghezza_spada; 
-                            offset_spada_x = 28.0f; offset_spada_y = 28.0f; 
+                            offset_spada_x = 28.0f + extra_x; // Avanti e indietro
+                            offset_spada_y = 28.0f + extra_y; // Su e giù
                         } else if (direzione_eroe == 1) { 
+                            // SINISTRA (Invertiamo extra_x perché il braccio va verso sinistra!)
                             ritaglio_x = (sta_attaccando ? 3.0f : 0.0f) * larghezza_spada; 
                             larghezza_mirino = -larghezza_spada; 
-                            offset_spada_x = 0.0f; offset_spada_y = 28.0f; 
+                            offset_spada_x = 0.0f - extra_x; 
+                            offset_spada_y = 28.0f + extra_y; 
                         }
 
                         Rectangle frame_rec_spada = {ritaglio_x, 0.0f, larghezza_mirino, altezza_mirino};
 
+                        // --- Z-INDEX ---
                         if (direzione_eroe == 0) {
                             DrawTextureRec(spada_sprite, frame_rec_spada, (Vector2){eroe.x + offset_spada_x, eroe.y + offset_spada_y}, WHITE);
                             DrawTextureRec(eroe_sprite, frame_rec, (Vector2){eroe.x, eroe.y}, colore_eroe);
