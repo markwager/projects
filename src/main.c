@@ -189,36 +189,71 @@ int mappa[RIGHE][COLONNE]={
                 ClearBackground(DARKGRAY);
                 DrawText("IL MIO ROGUELIKE", 250, 100, 40, WHITE);
 
+                // --- NUOVA PARTITA ---
                 if (DisegnaBottone((Rectangle){ 300, 200, 200, 50 }, "NUOVA PARTITA", GRAY)) {
+                    
+                    // 1. Ripristiniamo l'eroe
+                    eroe = crea_player(100, 100);
+                    eroe.height = eroe_sprite.height / righe_sprite_eroe; 
+                    eroe.width = eroe_sprite.width / colonne_sprite_eroe; 
+                    
+                    // 2. Ripristiniamo il mostro
+                    mostro = crea_mostro(14, 12, dim_tile);
+                    mostro.width = mostro_sprite.width / colonne_sprite_mostro;
+                    mostro.height = mostro_sprite.height / righe_sprite_mostro;
+                    mostro.x = 14 * dim_tile; 
+                    mostro.y = 12 * dim_tile; 
+                    mostro.attivo = true;
+
+                    // 3. Ripristiniamo la progressione
+                    punteggio = 0;
+                    ha_spada = false;
+                    spada_a_terra = true;
+                    sta_attaccando = false;
+                    timer_attacco = 0;
+                    shake_timer = 0;
+
+                    // 4. Riattiviamo tutti gli oggetti sulla mappa
+                    for(int i = 0; i < NUM_OGGETTI; i++) {
+                        lista_oggetti[i].attivo = true;
+                    }
+
+                    // Ora che tutto è pulito, possiamo iniziare a giocare!
                     stato_corrente = STATO_GIOCO; 
                 }
                 
                 // --- CARICA PARTITA ---
                 if (DisegnaBottone((Rectangle){ 300, 270, 200, 50 }, "CARICA PARTITA", GRAY)) {
-                    // Apriamo il file in lettura ("r")
                     FILE *file = fopen("salvataggio.txt", "r");
-                    if (file != NULL) { // Se il file esiste
+                    if (file != NULL) { 
                         int m_attivo, p_spada, p_terra, ogg_attivo;
+                        float temp_ex, temp_ey, temp_mx, temp_my; // Variabili sicure per le coordinate
                         
-                        // Leggiamo statistiche Eroe
-                        fscanf(file, "%f %f %d", &eroe.x, &eroe.y, &eroe.hp);
-                        // Leggiamo statistiche Mostro
-                        fscanf(file, "%f %f %d %d", &mostro.x, &mostro.y, &mostro.hp, &m_attivo);
+                        // Leggiamo coordinate Eroe e le assegniamo
+                        fscanf(file, "%f %f %d", &temp_ex, &temp_ey, &eroe.hp);
+                        eroe.x = temp_ex;
+                        eroe.y = temp_ey;
+
+                        // Leggiamo coordinate Mostro
+                        fscanf(file, "%f %f %d %d", &temp_mx, &temp_my, &mostro.hp, &m_attivo);
+                        mostro.x = temp_mx;
+                        mostro.y = temp_my;
                         mostro.attivo = (bool)m_attivo;
-                        // Leggiamo progressione e spada
+
+                        // Leggiamo progressione
                         fscanf(file, "%d", &punteggio);
                         fscanf(file, "%d %d", &p_spada, &p_terra);
                         ha_spada = (bool)p_spada;
                         spada_a_terra = (bool)p_terra;
                         
-                        // Leggiamo quali oggetti avevi già raccolto
+                        // Leggiamo oggetti
                         for(int i = 0; i < NUM_OGGETTI; i++) {
                             fscanf(file, "%d", &ogg_attivo);
                             lista_oggetti[i].attivo = (bool)ogg_attivo;
                         }
                         
                         fclose(file);
-                        stato_corrente = STATO_GIOCO; // Entra in partita!
+                        stato_corrente = STATO_GIOCO; 
                     }
                 }
 
@@ -279,26 +314,9 @@ int mappa[RIGHE][COLONNE]={
             // ==========================================
             case STATO_GIOCO: {
 
-                // Se premiamo ESC mentre giochiamo, torniamo al menù invece di chiudere il gioco
+                // Se premiamo ESC: SALVIAMO e torniamo al MENU
                 if (IsKeyPressed(KEY_ESCAPE)) {
-                    stato_corrente = STATO_MENU;
-                }
-
-                // --- NUOVO: SALVATAGGIO IN GIOCO (Tasto S) ---
-                if (IsKeyPressed(KEY_S)) {
-                    FILE *file = fopen("salvataggio.txt", "w"); // "w" significa scrivi (sovrascrive se esiste)
-                    if (file != NULL) {
-                        // Stampiamo nel file gli stessi identici valori che poi leggeremo
-                        fprintf(file, "%f %f %d\n", eroe.x, eroe.y, eroe.hp);
-                        fprintf(file, "%f %f %d %d\n", mostro.x, mostro.y, mostro.hp, (int)mostro.attivo);
-                        fprintf(file, "%d\n", punteggio);
-                        fprintf(file, "%d %d\n", (int)ha_spada, (int)spada_a_terra);
-                        
-                        for(int i = 0; i < NUM_OGGETTI; i++) {
-                            fprintf(file, "%d ", (int)lista_oggetti[i].attivo);
-                        }
-                        fclose(file);
-                    }
+                    stato_corrente = STATO_PAUSA;
                 }
 
                 // --- A. FASE DI INPUT & UPDATE (Fisica e Logica) ---
@@ -585,6 +603,54 @@ int mappa[RIGHE][COLONNE]={
                     DrawText("Premi S per salvare | ESC per il Menu", 450, 10, 15, LIGHTGRAY);
                 EndDrawing(); 
             } break; // <--- ATTENZIONE! QUESTO BREAK È FONDAMENTALE
+
+            // ==========================================
+            // STATO: MENU DI PAUSA
+            // ==========================================
+            case STATO_PAUSA: {
+                
+                // Se premiamo di nuovo ESC, togliamo la pausa e torniamo a giocare
+                if (IsKeyPressed(KEY_ESCAPE)) {
+                    stato_corrente = STATO_GIOCO;
+                }
+
+                BeginDrawing();
+                ClearBackground(DARKGRAY);
+                
+                DrawText("GIOCO IN PAUSA", 270, 100, 40, WHITE);
+
+                // Bottone 1: RIPRENDI
+                if (DisegnaBottone((Rectangle){ 300, 200, 200, 50 }, "RIPRENDI", GRAY)) {
+                    stato_corrente = STATO_GIOCO; 
+                }
+                
+                // Bottone 2: SALVA PARTITA (Ecco la vera logica di salvataggio!)
+                if (DisegnaBottone((Rectangle){ 300, 270, 200, 50 }, "SALVA PARTITA", GRAY)) {
+                    FILE *file = fopen("salvataggio.txt", "w");
+                    if (file != NULL) {
+                        // Forziamo (float) così il salvataggio è super sicuro
+                        fprintf(file, "%f %f %d\n", (float)eroe.x, (float)eroe.y, eroe.hp);
+                        fprintf(file, "%f %f %d %d\n", (float)mostro.x, (float)mostro.y, mostro.hp, (int)mostro.attivo);
+                        fprintf(file, "%d\n", punteggio);
+                        fprintf(file, "%d %d\n", (int)ha_spada, (int)spada_a_terra);
+                        
+                        for(int i = 0; i < NUM_OGGETTI; i++) {
+                            fprintf(file, "%d ", (int)lista_oggetti[i].attivo);
+                        }
+                        fclose(file);
+                        
+                        // Piccolo trucco visivo per capire che ha salvato
+                        DrawText("PARTITA SALVATA!", 320, 170, 20, GREEN);
+                    }
+                }
+
+                // Bottone 3: ESCI AL MENU PRINCIPALE
+                if (DisegnaBottone((Rectangle){ 300, 340, 200, 50 }, "MENU PRINCIPALE", GRAY)) {
+                    stato_corrente = STATO_MENU; 
+                }
+
+                EndDrawing();
+            } break;
 
         } // Fine Switch
 
