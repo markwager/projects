@@ -8,6 +8,7 @@ typedef struct{
     int y;
     int vel;
     int hp;
+    int iframes; //timer di invulnerabilità
     int width;
     int height;
 } Entita;
@@ -27,6 +28,8 @@ typedef struct {
     float width;
     float height;
     bool attivo;
+    int hp;
+    int iframes;
 } Nemico;
 
 Entita crea_player(int start_x, int start_y); //restituisce struct player
@@ -34,5 +37,8 @@ Entita crea_player(int start_x, int start_y); //restituisce struct player
 //per i movimenti indipendenti rendendoli più fluidi
 void muovi_player_x(Entita *player, StatoInput input); 
 void muovi_player_y(Entita *player, StatoInput input);
+
+// NUOVA: Dichiarazione funzione per creare il mostro
+Nemico crea_mostro(int start_x, int start_y, int dim_tile);
 
 #endif
