@@ -4,6 +4,7 @@
 #include "../include/entita.h"
 #include "../include/pathfinding.h"
 #include "../include/ui.h"
+#include <stdio.h>
 #include <math.h>
 
 #define COLONNE 20
@@ -40,7 +41,8 @@ int main(void){
     Impostazioni settings = { 0.5f, 800, 600 };
 
     //Crea fisicamente la finestra
-    InitWindow(settings.larghezza_schermo, settings.altezza_schermo, "Il mio primo Roguelike in C!"); 
+    InitWindow(settings.larghezza_schermo, settings.altezza_schermo, "Il mio primo Roguelike in C!");
+    SetExitKey(0); //Disabilita la chiusura automatica con ESC!
     SetTargetFPS(60);
 
     InitAudioDevice(); // Per il volume
@@ -92,10 +94,10 @@ int mappa[RIGHE][COLONNE]={
 
     //camera eroe
     Camera2D eroe_cam={0};
-eroe_cam.offset = (Vector2){settings.larghezza_schermo/2.0f, settings.altezza_schermo/2.0f}; 
+    eroe_cam.offset = (Vector2){settings.larghezza_schermo/2.0f, settings.altezza_schermo/2.0f}; 
     eroe_cam.rotation = 0.0f;
     eroe_cam.zoom = 1.0f; // <-- MANDATO A CAPO, FONDAMENTALE!
-    
+
     //oggetti
     Texture2D oggetti_sprite=LoadTexture("assets/objects.png");
     int dim_ogg=64;
@@ -179,21 +181,52 @@ eroe_cam.offset = (Vector2){settings.larghezza_schermo/2.0f, settings.altezza_sc
             // ==========================================
             // STATO: MENU PRINCIPALE
             // ==========================================
+            // ==========================================
+            // STATO: MENU PRINCIPALE
+            // ==========================================
             case STATO_MENU: {
                 BeginDrawing();
                 ClearBackground(DARKGRAY);
                 DrawText("IL MIO ROGUELIKE", 250, 100, 40, WHITE);
 
-                if (DisegnaBottone((Rectangle){ 300, 250, 200, 50 }, "GIOCA", GRAY)) {
+                if (DisegnaBottone((Rectangle){ 300, 200, 200, 50 }, "NUOVA PARTITA", GRAY)) {
                     stato_corrente = STATO_GIOCO; 
                 }
-                if (DisegnaBottone((Rectangle){ 300, 320, 200, 50 }, "OPZIONI", GRAY)) {
+                
+                // --- CARICA PARTITA ---
+                if (DisegnaBottone((Rectangle){ 300, 270, 200, 50 }, "CARICA PARTITA", GRAY)) {
+                    // Apriamo il file in lettura ("r")
+                    FILE *file = fopen("salvataggio.txt", "r");
+                    if (file != NULL) { // Se il file esiste
+                        int m_attivo, p_spada, p_terra, ogg_attivo;
+                        
+                        // Leggiamo statistiche Eroe
+                        fscanf(file, "%f %f %d", &eroe.x, &eroe.y, &eroe.hp);
+                        // Leggiamo statistiche Mostro
+                        fscanf(file, "%f %f %d %d", &mostro.x, &mostro.y, &mostro.hp, &m_attivo);
+                        mostro.attivo = (bool)m_attivo;
+                        // Leggiamo progressione e spada
+                        fscanf(file, "%d", &punteggio);
+                        fscanf(file, "%d %d", &p_spada, &p_terra);
+                        ha_spada = (bool)p_spada;
+                        spada_a_terra = (bool)p_terra;
+                        
+                        // Leggiamo quali oggetti avevi già raccolto
+                        for(int i = 0; i < NUM_OGGETTI; i++) {
+                            fscanf(file, "%d", &ogg_attivo);
+                            lista_oggetti[i].attivo = (bool)ogg_attivo;
+                        }
+                        
+                        fclose(file);
+                        stato_corrente = STATO_GIOCO; // Entra in partita!
+                    }
+                }
+
+                if (DisegnaBottone((Rectangle){ 300, 340, 200, 50 }, "OPZIONI", GRAY)) {
                     stato_corrente = STATO_OPZIONI; 
                 }
-                if (DisegnaBottone((Rectangle){ 300, 390, 200, 50 }, "ESCI", GRAY)) {
-                    // Imposta una variabile fittizia per far capire a WindowShouldClose() che vogliamo uscire.
-                    // In Raylib, il modo più sicuro di uscire da codice è breakare il ciclo while principale.
-                    goto esci_dal_gioco; // Usiamo un goto speciale solo per uscire puliti (accettabile in C in questi casi limite)
+                if (DisegnaBottone((Rectangle){ 300, 410, 200, 50 }, "ESCI", GRAY)) {
+                    goto esci_dal_gioco; 
                 }
                 EndDrawing();
             } break;
@@ -249,6 +282,23 @@ eroe_cam.offset = (Vector2){settings.larghezza_schermo/2.0f, settings.altezza_sc
                 // Se premiamo ESC mentre giochiamo, torniamo al menù invece di chiudere il gioco
                 if (IsKeyPressed(KEY_ESCAPE)) {
                     stato_corrente = STATO_MENU;
+                }
+
+                // --- NUOVO: SALVATAGGIO IN GIOCO (Tasto S) ---
+                if (IsKeyPressed(KEY_S)) {
+                    FILE *file = fopen("salvataggio.txt", "w"); // "w" significa scrivi (sovrascrive se esiste)
+                    if (file != NULL) {
+                        // Stampiamo nel file gli stessi identici valori che poi leggeremo
+                        fprintf(file, "%f %f %d\n", eroe.x, eroe.y, eroe.hp);
+                        fprintf(file, "%f %f %d %d\n", mostro.x, mostro.y, mostro.hp, (int)mostro.attivo);
+                        fprintf(file, "%d\n", punteggio);
+                        fprintf(file, "%d %d\n", (int)ha_spada, (int)spada_a_terra);
+                        
+                        for(int i = 0; i < NUM_OGGETTI; i++) {
+                            fprintf(file, "%d ", (int)lista_oggetti[i].attivo);
+                        }
+                        fclose(file);
+                    }
                 }
 
                 // --- A. FASE DI INPUT & UPDATE (Fisica e Logica) ---
@@ -532,7 +582,7 @@ eroe_cam.offset = (Vector2){settings.larghezza_schermo/2.0f, settings.altezza_sc
                         DrawText(TextFormat("HP MOSTRO: %d", mostro.hp), 200, 10, 20, RED);
                     }
                     DrawText(TextFormat("PUNTEGGIO: %d", punteggio), 10, 40, 20, GREEN);
-
+                    DrawText("Premi S per salvare | ESC per il Menu", 450, 10, 15, LIGHTGRAY);
                 EndDrawing(); 
             } break; // <--- ATTENZIONE! QUESTO BREAK È FONDAMENTALE
 
