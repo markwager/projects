@@ -1,9 +1,9 @@
 #include "../include/pathfinding.h"
 #include <stdbool.h>
-#include <math.h> // Serve per fabs()
+#include <math.h> //serve per fabs()
 
-Vector2 calcola_prossimo_passo(Nemico mostro, Entita eroe, int mappa[RIGHE][COLONNE], int dim_tile) {
-    // 1. CALCOLO SUI PIEDI: Usiamo la base dello sprite per non finire mai dentro i muri!
+Vector2 calcola_prossimo_passo(Nemico mostro, Entita eroe, int mappa[RIGHE][COLONNE], int dim_tile){
+    //1. CALCOLO SUI PIEDI: Usiamo la base dello sprite per non finire mai dentro i muri (mappatura pixel-matrice)
     int start_c = (int)(mostro.x + mostro.width / 2.0f) / dim_tile;
     int start_r = (int)(mostro.y + mostro.height - 5.0f) / dim_tile; // -5px per stare sicuri sul pavimento
     
@@ -14,11 +14,13 @@ Vector2 calcola_prossimo_passo(Nemico mostro, Entita eroe, int mappa[RIGHE][COLO
         return (Vector2){eroe.x, eroe.y};
     }
 
-    bool visited[RIGHE][COLONNE] = {false};
-    int parent_r[RIGHE][COLONNE]; 
-    int parent_c[RIGHE][COLONNE];
+    //preparazione della memoria
 
-    // Pulizia rigorosa della memoria (Evita percorsi fantasma)
+    bool visited[RIGHE][COLONNE] = {false}; //caselle visitate
+    int parent_r[RIGHE][COLONNE];
+    int parent_c[RIGHE][COLONNE]; //traccia stile pollicino: annotazione da quale cella si proviene
+
+    //pulizia rigorosa della memoria (Evita percorsi fantasma)
     for(int i = 0; i < RIGHE; i++){
         for(int j = 0; j < COLONNE; j++){
             parent_r[i][j] = -1;
@@ -26,7 +28,7 @@ Vector2 calcola_prossimo_passo(Nemico mostro, Entita eroe, int mappa[RIGHE][COLO
         }
     }
 
-    int queue_r[1000]; // Coda aumentata per massima sicurezza
+    int queue_r[1000]; //coda aumentata per massima sicurezza: sarebbe coda di attesa della BFS
     int queue_c[1000];
     int head = 0, tail = 0;
 
@@ -39,7 +41,7 @@ Vector2 calcola_prossimo_passo(Nemico mostro, Entita eroe, int mappa[RIGHE][COLO
     int dc[] = {0, 0, -1, 1};
     bool found = false;
 
-    // 2. INONDAZIONE
+    // 2. BFS
     while (head < tail) {
         int curr_r = queue_r[head];
         int curr_c = queue_c[head];
@@ -72,7 +74,7 @@ Vector2 calcola_prossimo_passo(Nemico mostro, Entita eroe, int mappa[RIGHE][COLO
 
     if (!found) return (Vector2){eroe.x, eroe.y};
 
-    // 3. RICOSTRUZIONE DEL PERCORSO
+    // 3. RICOSTRUZIONE DEL PERCORSO: percorso a ritroso
     int curr_r = target_r;
     int curr_c = target_c;
 
